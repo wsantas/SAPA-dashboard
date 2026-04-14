@@ -1,6 +1,10 @@
 # SAPA Dashboard
 
+**Live demo:** https://sapa-dashboard.vercel.app
+
 A real-time analytics dashboard for [SAPA](https://github.com/wsantas/sapa-public), a local FastAPI spaced-repetition tracker. Built as a 0→1 TypeScript + React learning project against a real backend I already owned.
+
+> The Vercel deployment runs in demo mode with a baked snapshot of real SAPA analytics and a real Claude-generated insights response — the frontend code path is identical, just short-circuited before the network call so there's no need to expose a local backend. Clone the repo and run it against your own SAPA instance (see below) to see it hit the live API.
 
 The point was to build a production-quality TS + React frontend in a few focused sessions, hitting every major pattern Ashby-class and PostHog-class codebases care about, while shipping something I actually use.
 
