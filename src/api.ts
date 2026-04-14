@@ -3,20 +3,24 @@ import { AnalyticsSchema, type Analytics } from './types'
 
 const API_BASE = 'http://localhost:8002'
 
-export async function fetchAnalytics(): Promise<Analytics> {
-  const response = await fetch(`${API_BASE}/api/analytics`)
+async function apiGet<T>(path: string, schema: z.ZodType<T>): Promise<T> {
+  const response = await fetch(`${API_BASE}${path}`)
   if (!response.ok) {
     throw new Error(
-      `GET /api/analytics failed: ${response.status} ${response.statusText}`,
+      `GET ${path} failed: ${response.status} ${response.statusText}`,
     )
   }
 
   const raw: unknown = await response.json()
-  const parsed = AnalyticsSchema.safeParse(raw)
+  const parsed = schema.safeParse(raw)
   if (!parsed.success) {
     throw new Error(
-      `GET /api/analytics returned an invalid shape: ${z.prettifyError(parsed.error)}`,
+      `GET ${path} returned an invalid shape: ${z.prettifyError(parsed.error)}`,
     )
   }
   return parsed.data
+}
+
+export function fetchAnalytics(): Promise<Analytics> {
+  return apiGet('/api/analytics', AnalyticsSchema)
 }
