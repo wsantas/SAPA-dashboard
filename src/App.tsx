@@ -1,49 +1,71 @@
+import type { Analytics, AsyncState } from './types'
 import { fetchAnalytics } from './api'
 import { useAsyncData } from './useAsyncData'
 import { StreakCard } from './components/StreakCard'
 import { ConfidenceBreakdown } from './components/ConfidenceBreakdown'
 import { DueReviewsList } from './components/DueReviewsList'
+import styles from './App.module.css'
 
 function App() {
   const { state, refetch } = useAsyncData(fetchAnalytics)
 
+  return (
+    <div className={styles.app}>
+      <div className={styles.shell}>
+        <header className={styles.header}>
+          <div className={styles.brand}>
+            <div className={styles.title}>
+              <h1>SAPA Dashboard</h1>
+              <span className={styles.badge}>
+                <span className={styles.badgeDot} />
+                Live
+              </span>
+            </div>
+            <p className={styles.subtitle}>Spaced-repetition analytics</p>
+          </div>
+          <button type="button" className={styles.button} onClick={refetch}>
+            Refresh
+          </button>
+        </header>
+        <main>
+          <Body state={state} />
+        </main>
+      </div>
+    </div>
+  )
+}
+
+function Body({ state }: { state: AsyncState<Analytics> }) {
   switch (state.status) {
     case 'idle':
-      return (
-        <main>
-          <h1>SAPA Dashboard</h1>
-          <p>Idle.</p>
-        </main>
-      )
+      return null
     case 'loading':
       return (
-        <main>
-          <h1>SAPA Dashboard</h1>
-          <p>Loading analytics…</p>
-        </main>
+        <div className={styles.center}>
+          <span className={styles.loadingDots} aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </span>
+          <p className={styles.centerTitle}>Loading analytics…</p>
+        </div>
       )
     case 'error':
       return (
-        <main>
-          <h1>SAPA Dashboard</h1>
-          <p role="alert">Error: {state.error.message}</p>
-          <button type="button" onClick={refetch}>
-            Retry
-          </button>
-        </main>
+        <div className={styles.center}>
+          <p className={styles.errorTitle} role="alert">
+            {state.error.message}
+          </p>
+        </div>
       )
     case 'success': {
       const { overview, confidence_distribution, due_reviews } = state.data
       return (
-        <main>
-          <h1>SAPA Dashboard</h1>
+        <div className={styles.grid}>
           <StreakCard overview={overview} />
           <ConfidenceBreakdown distribution={confidence_distribution} />
           <DueReviewsList reviews={due_reviews} />
-          <button type="button" onClick={refetch}>
-            Refresh
-          </button>
-        </main>
+        </div>
       )
     }
     default: {

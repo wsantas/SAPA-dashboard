@@ -1,4 +1,5 @@
 import type { Overview } from '../types'
+import styles from './Card.module.css'
 
 type StreakCardProps = {
   overview: Overview
@@ -6,26 +7,34 @@ type StreakCardProps = {
 
 export function StreakCard({ overview }: StreakCardProps) {
   return (
-    <section aria-labelledby="streak-heading">
-      <h2 id="streak-heading">Streak</h2>
-      <dl>
-        <div>
-          <dt>Current</dt>
-          <dd>{overview.current_streak} days</dd>
+    <section className={styles.card} aria-labelledby="streak-heading">
+      <h2 id="streak-heading" className={styles.heading}>
+        Streak
+      </h2>
+      <div className={styles.statGrid}>
+        <div className={styles.stat}>
+          <span className={styles.statLabel}>Current</span>
+          <span className={styles.statValue}>
+            {overview.current_streak}
+            <span className={styles.statUnit}>days</span>
+          </span>
         </div>
-        <div>
-          <dt>Longest</dt>
-          <dd>{overview.longest_streak} days</dd>
+        <div className={styles.stat}>
+          <span className={styles.statLabel}>Longest</span>
+          <span className={styles.statValue}>
+            {overview.longest_streak}
+            <span className={styles.statUnit}>days</span>
+          </span>
         </div>
-        <div>
-          <dt>Topics tracked</dt>
-          <dd>{overview.total_topics}</dd>
+        <div className={styles.stat}>
+          <span className={styles.statLabel}>Topics tracked</span>
+          <span className={styles.statValue}>{overview.total_topics}</span>
         </div>
-        <div>
-          <dt>Sessions this week</dt>
-          <dd>{overview.this_week}</dd>
+        <div className={styles.stat}>
+          <span className={styles.statLabel}>Sessions this week</span>
+          <span className={styles.statValue}>{overview.this_week}</span>
         </div>
-      </dl>
+      </div>
     </section>
   )
 }

@@ -1,4 +1,5 @@
 import type { ConfidenceDistribution } from '../types'
+import styles from './Card.module.css'
 
 type ConfidenceBreakdownProps = {
   distribution: ConfidenceDistribution
@@ -11,6 +12,13 @@ const LABELS: Record<keyof ConfidenceDistribution, string> = {
   weak: 'Weak',
 }
 
+const FILL_COLOR: Record<keyof ConfidenceDistribution, string> = {
+  mastered: 'var(--success)',
+  strong: 'var(--success-strong)',
+  learning: 'var(--warning)',
+  weak: 'var(--danger)',
+}
+
 const ORDER: Array<keyof ConfidenceDistribution> = [
   'mastered',
   'strong',
@@ -18,7 +26,9 @@ const ORDER: Array<keyof ConfidenceDistribution> = [
   'weak',
 ]
 
-export function ConfidenceBreakdown({ distribution }: ConfidenceBreakdownProps) {
+export function ConfidenceBreakdown({
+  distribution,
+}: ConfidenceBreakdownProps) {
   const total =
     distribution.mastered +
     distribution.strong +
@@ -26,19 +36,33 @@ export function ConfidenceBreakdown({ distribution }: ConfidenceBreakdownProps) 
     distribution.weak
 
   return (
-    <section aria-labelledby="confidence-heading">
-      <h2 id="confidence-heading">Confidence ({total} topics)</h2>
-      <ul>
+    <section className={styles.card} aria-labelledby="confidence-heading">
+      <h2 id="confidence-heading" className={styles.heading}>
+        Confidence
+      </h2>
+      <div className={styles.bars}>
         {ORDER.map((key) => {
           const count = distribution[key]
-          const pct = total === 0 ? 0 : Math.round((count / total) * 100)
+          const pct = total === 0 ? 0 : (count / total) * 100
           return (
-            <li key={key}>
-              {LABELS[key]}: {count} ({pct}%)
-            </li>
+            <div key={key} className={styles.bar}>
+              <div className={styles.barHeader}>
+                <span className={styles.barLabel}>{LABELS[key]}</span>
+                <span className={styles.barValue}>
+                  {count} · {Math.round(pct)}%
+                </span>
+              </div>
+              <div className={styles.barTrack}>
+                <div
+                  className={styles.barFill}
+                  style={{ width: `${pct}%`, background: FILL_COLOR[key] }}
+                />
+              </div>
+            </div>
           )
         })}
-      </ul>
+      </div>
+      <p className={styles.caption}>{total} topics</p>
     </section>
   )
 }
