@@ -44,4 +44,27 @@ describe('AnalyticsSchema', () => {
       expect(paths).toContain('topics.0.confidence_score')
     }
   })
+
+  it('rejects a topic missing the confidence_score field', () => {
+    const fixture: unknown = {
+      ...AnalyticsSchema.parse(validAnalyticsFixture),
+      topics: [
+        {
+          name: 'hyperventilation',
+          first_learned: '2026-04-13T17:43:20.095781',
+          last_reviewed: '2026-04-13T17:52:35.980409',
+          review_count: 1,
+          next_review: '2026-04-16T17:52:35.980444',
+          // confidence_score deliberately omitted
+        },
+      ],
+    }
+    const result = AnalyticsSchema.safeParse(fixture)
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      const paths = result.error.issues.map((issue) => issue.path.join('.'))
+      expect(paths).toContain('topics.0.confidence_score')
+      expect(paths).toHaveLength(1)
+    }
+  })
 })
