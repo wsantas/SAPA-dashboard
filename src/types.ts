@@ -42,3 +42,17 @@ export type Topic = z.infer<typeof TopicSchema>
 export type Overview = z.infer<typeof OverviewSchema>
 export type ConfidenceDistribution = z.infer<typeof ConfidenceDistributionSchema>
 export type Analytics = z.infer<typeof AnalyticsSchema>
+
+export const InsightSchema = z.object({
+  title: z.string().min(1),
+  body: z.string().min(1),
+})
+
+export const InsightsResponseSchema = z.object({
+  insights: z.array(InsightSchema).min(1).max(5),
+  model: z.string(),
+  generated_at: z.string(),
+})
+
+export type Insight = z.infer<typeof InsightSchema>
+export type InsightsResponse = z.infer<typeof InsightsResponseSchema>

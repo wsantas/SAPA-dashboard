@@ -4,6 +4,7 @@ import { useAsyncData } from './useAsyncData'
 import { StreakCard } from './components/StreakCard'
 import { ConfidenceBreakdown } from './components/ConfidenceBreakdown'
 import { DueReviewsList } from './components/DueReviewsList'
+import { InsightsCard } from './components/InsightsCard'
 import styles from './App.module.css'
 
 function App() {
@@ -65,6 +66,7 @@ function Body({ state }: { state: AsyncState<Analytics> }) {
           <StreakCard overview={overview} />
           <ConfidenceBreakdown distribution={confidence_distribution} />
           <DueReviewsList reviews={due_reviews} />
+          <InsightsCard />
         </div>
       )
     }
