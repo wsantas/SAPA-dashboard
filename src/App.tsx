@@ -1,5 +1,5 @@
 import type { Analytics, AsyncState } from './types'
-import { fetchAnalytics } from './api'
+import { DEMO_MODE, fetchAnalytics } from './api'
 import { useAsyncData } from './useAsyncData'
 import { StreakCard } from './components/StreakCard'
 import { ConfidenceBreakdown } from './components/ConfidenceBreakdown'
@@ -19,7 +19,7 @@ function App() {
               <h1>SAPA Dashboard</h1>
               <span className={styles.badge}>
                 <span className={styles.badgeDot} />
-                Live
+                {DEMO_MODE ? 'Demo' : 'Live'}
               </span>
             </div>
             <p className={styles.subtitle}>Spaced-repetition analytics</p>

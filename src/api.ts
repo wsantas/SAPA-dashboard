@@ -5,8 +5,15 @@ import {
   type Analytics,
   type InsightsResponse,
 } from './types'
+import { demoAnalytics, demoInsights } from './demo'
 
-const API_BASE = 'http://localhost:8002'
+const API_BASE: string = import.meta.env['VITE_API_BASE'] ?? 'http://localhost:8002'
+
+export const DEMO_MODE: boolean = import.meta.env['VITE_DEMO_MODE'] === 'true'
+
+function simulateNetwork<T>(value: T, ms = 400): Promise<T> {
+  return new Promise((resolve) => setTimeout(() => resolve(value), ms))
+}
 
 async function apiGet<T>(path: string, schema: z.ZodType<T>): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`)
@@ -51,9 +58,11 @@ function parseOrThrow<T>(path: string, schema: z.ZodType<T>, raw: unknown): T {
 }
 
 export function fetchAnalytics(): Promise<Analytics> {
+  if (DEMO_MODE) return simulateNetwork(demoAnalytics)
   return apiGet('/api/analytics', AnalyticsSchema)
 }
 
 export function fetchInsights(): Promise<InsightsResponse> {
+  if (DEMO_MODE) return simulateNetwork(demoInsights, 1200)
   return apiPost('/api/ai/insights', InsightsResponseSchema)
 }
