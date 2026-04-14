@@ -1,29 +1,8 @@
-import { useEffect, useState } from 'react'
 import { fetchAnalytics } from './api'
-import type { Analytics, AsyncState } from './types'
+import { useAsyncData } from './useAsyncData'
 
 function App() {
-  const [state, setState] = useState<AsyncState<Analytics>>({ status: 'loading' })
-
-  useEffect(() => {
-    let cancelled = false
-
-    fetchAnalytics()
-      .then((data) => {
-        if (!cancelled) setState({ status: 'success', data })
-      })
-      .catch((error: unknown) => {
-        if (cancelled) return
-        setState({
-          status: 'error',
-          error: error instanceof Error ? error : new Error(String(error)),
-        })
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
+  const { state, refetch } = useAsyncData(fetchAnalytics)
 
   switch (state.status) {
     case 'idle':
@@ -45,6 +24,9 @@ function App() {
         <main>
           <h1>SAPA Dashboard</h1>
           <p role="alert">Error: {state.error.message}</p>
+          <button type="button" onClick={refetch}>
+            Retry
+          </button>
         </main>
       )
     case 'success': {
@@ -53,13 +35,19 @@ function App() {
         <main>
           <h1>SAPA Dashboard</h1>
           <p>
-            {overview.total_topics} topics tracked · streak {overview.current_streak} /{' '}
-            {overview.longest_streak} · {overview.due_reviews} due for review
+            {overview.total_topics} topics tracked · streak{' '}
+            {overview.current_streak} / {overview.longest_streak} ·{' '}
+            {overview.due_reviews} due for review
           </p>
           <p>
-            Mastered {confidence_distribution.mastered} · Strong {confidence_distribution.strong}{' '}
-            · Learning {confidence_distribution.learning} · Weak {confidence_distribution.weak}
+            Mastered {confidence_distribution.mastered} · Strong{' '}
+            {confidence_distribution.strong} · Learning{' '}
+            {confidence_distribution.learning} · Weak{' '}
+            {confidence_distribution.weak}
           </p>
+          <button type="button" onClick={refetch}>
+            Refresh
+          </button>
         </main>
       )
     }
