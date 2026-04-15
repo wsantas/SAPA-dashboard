@@ -40,6 +40,11 @@ export const validAnalyticsFixture: unknown = {
   daily_activity: { '2026-04-13': 109 },
   weekly_totals: [
     { week: 'Jan 26', total: 0, current: false },
+    { week: 'Feb 02', total: 3, current: false },
+    { week: 'Feb 09', total: 7, current: false },
+    { week: 'Feb 16', total: 4, current: false },
+    { week: 'Apr 06', total: 12, current: false },
+    { week: 'Apr 13', total: 89, current: true },
   ],
   topic_frequency: { 'foam rolling': 4 },
 }

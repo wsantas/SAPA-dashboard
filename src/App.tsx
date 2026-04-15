@@ -4,6 +4,7 @@ import { useAsyncData } from './useAsyncData'
 import { StreakCard } from './components/StreakCard'
 import { ConfidenceBreakdown } from './components/ConfidenceBreakdown'
 import { DueReviewsList } from './components/DueReviewsList'
+import { WeeklyActivityChart } from './components/WeeklyActivityChart'
 import { InsightsCard } from './components/InsightsCard'
 import styles from './App.module.css'
 
@@ -60,12 +61,14 @@ function Body({ state }: { state: AsyncState<Analytics> }) {
         </div>
       )
     case 'success': {
-      const { overview, confidence_distribution, due_reviews } = state.data
+      const { overview, confidence_distribution, due_reviews, weekly_totals } =
+        state.data
       return (
         <div className={styles.grid}>
           <StreakCard overview={overview} />
           <ConfidenceBreakdown distribution={confidence_distribution} />
           <DueReviewsList reviews={due_reviews} />
+          <WeeklyActivityChart weeks={weekly_totals} />
           <InsightsCard />
         </div>
       )

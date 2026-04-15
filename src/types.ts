@@ -31,16 +31,24 @@ export const ConfidenceDistributionSchema = z.object({
   weak: z.number().int().nonnegative(),
 })
 
+export const WeeklyTotalSchema = z.object({
+  week: z.string(),
+  total: z.number().int().nonnegative(),
+  current: z.boolean(),
+})
+
 export const AnalyticsSchema = z.object({
   overview: OverviewSchema,
   confidence_distribution: ConfidenceDistributionSchema,
   topics: z.array(TopicSchema),
   due_reviews: z.array(TopicSchema),
+  weekly_totals: z.array(WeeklyTotalSchema),
 })
 
 export type Topic = z.infer<typeof TopicSchema>
 export type Overview = z.infer<typeof OverviewSchema>
 export type ConfidenceDistribution = z.infer<typeof ConfidenceDistributionSchema>
+export type WeeklyTotal = z.infer<typeof WeeklyTotalSchema>
 export type Analytics = z.infer<typeof AnalyticsSchema>
 
 export const InsightSchema = z.object({

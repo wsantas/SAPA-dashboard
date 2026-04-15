@@ -1,0 +1,72 @@
+.chartCard {
+  grid-column: 1 / -1;
+  gap: var(--space-4);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-4);
+}
+
+.summary {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.summaryLabel {
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 10px;
+}
+
+.summaryValue {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.summaryDivider {
+  color: var(--text-dim);
+}
+
+.svg {
+  width: 100%;
+  height: 200px;
+  display: block;
+  overflow: visible;
+}
+
+.axis {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.bar {
+  fill: var(--border-strong);
+  transition: fill 160ms ease;
+}
+
+.bar:hover {
+  fill: var(--text-dim);
+}
+
+.barCurrent {
+  fill: var(--accent);
+  transition: fill 160ms ease;
+}
+
+.barCurrent:hover {
+  fill: var(--accent-hover);
+}
+
+.label {
+  fill: var(--text-dim);
+  font-size: 10px;
+  font-family: var(--font-mono);
+}

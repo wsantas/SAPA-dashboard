@@ -82,6 +82,20 @@ export const demoAnalytics: Analytics = {
     },
   ],
   due_reviews: [],
+  weekly_totals: [
+    { week: 'Jan 26', total: 2, current: false },
+    { week: 'Feb 02', total: 5, current: false },
+    { week: 'Feb 09', total: 8, current: false },
+    { week: 'Feb 16', total: 11, current: false },
+    { week: 'Feb 23', total: 7, current: false },
+    { week: 'Mar 01', total: 14, current: false },
+    { week: 'Mar 08', total: 19, current: false },
+    { week: 'Mar 15', total: 23, current: false },
+    { week: 'Mar 22', total: 28, current: false },
+    { week: 'Mar 29', total: 31, current: false },
+    { week: 'Apr 06', total: 42, current: false },
+    { week: 'Apr 13', total: 89, current: true },
+  ],
 }
 
 export const demoInsights: InsightsResponse = {

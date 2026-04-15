@@ -25,6 +25,17 @@ describe('AnalyticsSchema', () => {
     expect(parsed).not.toHaveProperty('session_types')
     expect(parsed).not.toHaveProperty('weekly_chart')
     expect(parsed).not.toHaveProperty('daily_activity')
+    expect(parsed).not.toHaveProperty('topic_frequency')
+  })
+
+  it('exposes the weekly_totals array after parsing', () => {
+    const parsed = AnalyticsSchema.parse(validAnalyticsFixture)
+    expect(parsed.weekly_totals).toHaveLength(6)
+    expect(parsed.weekly_totals[5]).toEqual({
+      week: 'Apr 13',
+      total: 89,
+      current: true,
+    })
   })
 
   it('rejects a payload missing overview', () => {
