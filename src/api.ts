@@ -2,10 +2,14 @@ import { z } from 'zod'
 import {
   AnalyticsSchema,
   InsightsResponseSchema,
+  TopicSchema,
   type Analytics,
   type InsightsResponse,
+  type Topic,
 } from './types'
 import { demoAnalytics, demoInsights } from './demo'
+
+const TopicsSchema = z.array(TopicSchema)
 
 const API_BASE: string = import.meta.env['VITE_API_BASE'] ?? 'http://localhost:8002'
 
@@ -60,6 +64,11 @@ function parseOrThrow<T>(path: string, schema: z.ZodType<T>, raw: unknown): T {
 export function fetchAnalytics(): Promise<Analytics> {
   if (DEMO_MODE) return simulateNetwork(demoAnalytics)
   return apiGet('/api/analytics', AnalyticsSchema)
+}
+
+export function fetchTopics(): Promise<Topic[]> {
+  if (DEMO_MODE) return simulateNetwork(demoAnalytics.topics as Topic[])
+  return apiGet('/api/topics', TopicsSchema)
 }
 
 export function fetchInsights(): Promise<InsightsResponse> {

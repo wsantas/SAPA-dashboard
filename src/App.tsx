@@ -5,6 +5,7 @@ import { StreakCard } from './components/StreakCard'
 import { ConfidenceBreakdown } from './components/ConfidenceBreakdown'
 import { DueReviewsList } from './components/DueReviewsList'
 import { WeeklyActivityChart } from './components/WeeklyActivityChart'
+import { TopicsExplorer } from './components/TopicsExplorer'
 import { InsightsCard } from './components/InsightsCard'
 import styles from './App.module.css'
 
@@ -69,6 +70,7 @@ function Body({ state }: { state: AsyncState<Analytics> }) {
           <ConfidenceBreakdown distribution={confidence_distribution} />
           <DueReviewsList reviews={due_reviews} />
           <WeeklyActivityChart weeks={weekly_totals} />
+          <TopicsExplorer />
           <InsightsCard />
         </div>
       )
