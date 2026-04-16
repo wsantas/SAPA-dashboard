@@ -1,0 +1,102 @@
+import { useEffect, useReducer, useRef } from 'react'
+import type { WsEvent } from '../useWebSocket'
+import styles from './LiveToast.module.css'
+
+type Props = {
+  readonly event: WsEvent | null
+}
+
+const DISPLAY_MS = 4000
+const EXIT_MS = 300
+
+const EVENT_ICONS: Record<string, string> = {
+  file_created: '\u{1F4C4}',
+  file_modified: '\u270F\uFE0F',
+  file_deleted: '\u{1F5D1}\uFE0F',
+}
+
+function basename(filePath: string): string {
+  const segments = filePath.split('/')
+  return segments[segments.length - 1] ?? filePath
+}
+
+function formatTime(timestamp: string): string {
+  const date = new Date(timestamp)
+  if (isNaN(date.getTime())) return ''
+  const hh = String(date.getHours()).padStart(2, '0')
+  const mm = String(date.getMinutes()).padStart(2, '0')
+  return `${hh}:${mm}`
+}
+
+type ToastState = {
+  readonly phase: 'hidden' | 'visible' | 'exiting'
+  readonly displayed: WsEvent | null
+  readonly trigger: WsEvent | null
+}
+
+type ToastAction =
+  | { type: 'new-event'; event: WsEvent }
+  | { type: 'exit' }
+  | { type: 'hide' }
+
+function toastReducer(prev: ToastState, action: ToastAction): ToastState {
+  switch (action.type) {
+    case 'new-event':
+      return { phase: 'visible', displayed: action.event, trigger: action.event }
+    case 'exit':
+      return { ...prev, phase: 'exiting' }
+    case 'hide':
+      return { phase: 'hidden', displayed: null, trigger: prev.trigger }
+  }
+}
+
+const INITIAL_STATE: ToastState = { phase: 'hidden', displayed: null, trigger: null }
+
+export function LiveToast({ event }: Props) {
+  const [state, dispatch] = useReducer(toastReducer, INITIAL_STATE)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const exitTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+
+  // When the parent passes a new event, show a toast
+  useEffect(() => {
+    if (!event) return
+    dispatch({ type: 'new-event', event })
+  }, [event])
+
+  // Manage timers based on phase transitions
+  useEffect(() => {
+    if (state.phase !== 'visible') return
+
+    clearTimeout(timerRef.current)
+    clearTimeout(exitTimerRef.current)
+
+    timerRef.current = setTimeout(() => {
+      dispatch({ type: 'exit' })
+      exitTimerRef.current = setTimeout(() => {
+        dispatch({ type: 'hide' })
+      }, EXIT_MS)
+    }, DISPLAY_MS)
+
+    return () => {
+      clearTimeout(timerRef.current)
+      clearTimeout(exitTimerRef.current)
+    }
+  }, [state.phase, state.trigger])
+
+  if (state.phase === 'hidden' || !state.displayed) return null
+
+  const icon = EVENT_ICONS[state.displayed.type] ?? '\u{1F4E1}'
+  const name = basename(state.displayed.path)
+  const time = formatTime(state.displayed.timestamp)
+
+  return (
+    <div
+      className={styles.toast}
+      data-exiting={state.phase === 'exiting' ? 'true' : undefined}
+    >
+      <span className={styles.icon}>{icon}</span>
+      <span className={styles.filename}>{name}</span>
+      {time && <span className={styles.time}>{time}</span>}
+    </div>
+  )
+}

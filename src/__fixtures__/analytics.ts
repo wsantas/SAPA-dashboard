@@ -37,7 +37,7 @@ export const validAnalyticsFixture: unknown = {
   knowledge_gaps: [],
   review_timeline: [],
   new_vs_review: { new: 89, review: 0 },
-  daily_activity: { '2026-04-13': 109 },
+  daily_activity: { '2026-04-13': 109, '2026-04-10': 5, '2026-03-28': 12 },
   weekly_totals: [
     { week: 'Jan 26', total: 0, current: false },
     { week: 'Feb 02', total: 3, current: false },

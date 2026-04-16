@@ -1,16 +1,31 @@
+import { useEffect, useRef } from 'react'
 import type { Analytics, AsyncState } from './types'
 import { DEMO_MODE, fetchAnalytics } from './api'
 import { useAsyncData } from './useAsyncData'
+import { useWebSocket } from './useWebSocket'
+import type { WsEvent } from './useWebSocket'
 import { StreakCard } from './components/StreakCard'
 import { ConfidenceBreakdown } from './components/ConfidenceBreakdown'
 import { DueReviewsList } from './components/DueReviewsList'
 import { WeeklyActivityChart } from './components/WeeklyActivityChart'
+import { ActivityHeatmap } from './components/ActivityHeatmap'
 import { TopicsExplorer } from './components/TopicsExplorer'
 import { InsightsCard } from './components/InsightsCard'
+import { LiveToast } from './components/LiveToast'
 import styles from './App.module.css'
 
 function App() {
   const { state, refetch } = useAsyncData(fetchAnalytics)
+  const { lastEvent, connected } = useWebSocket()
+
+  // Auto-refetch when a WebSocket event arrives and data is loaded
+  const prevEventRef = useRef<WsEvent | null>(null)
+  useEffect(() => {
+    if (lastEvent && lastEvent !== prevEventRef.current && state.status === 'success') {
+      refetch()
+    }
+    prevEventRef.current = lastEvent
+  }, [lastEvent, state.status, refetch])
 
   return (
     <div className={styles.app}>
@@ -22,6 +37,9 @@ function App() {
               <span className={styles.badge}>
                 <span className={styles.badgeDot} />
                 {DEMO_MODE ? 'Demo' : 'Live'}
+                {!DEMO_MODE && connected && (
+                  <span className={styles.connectedDot} />
+                )}
               </span>
             </div>
             <p className={styles.subtitle}>Spaced-repetition analytics</p>
@@ -34,6 +52,7 @@ function App() {
           <Body state={state} />
         </main>
       </div>
+      <LiveToast event={lastEvent} />
     </div>
   )
 }
@@ -62,14 +81,20 @@ function Body({ state }: { state: AsyncState<Analytics> }) {
         </div>
       )
     case 'success': {
-      const { overview, confidence_distribution, due_reviews, weekly_totals } =
-        state.data
+      const {
+        overview,
+        confidence_distribution,
+        due_reviews,
+        weekly_totals,
+        daily_activity,
+      } = state.data
       return (
         <div className={styles.grid}>
           <StreakCard overview={overview} />
           <ConfidenceBreakdown distribution={confidence_distribution} />
           <DueReviewsList reviews={due_reviews} />
           <WeeklyActivityChart weeks={weekly_totals} />
+          <ActivityHeatmap dailyActivity={daily_activity} />
           <TopicsExplorer />
           <InsightsCard />
         </div>

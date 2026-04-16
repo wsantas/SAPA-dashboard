@@ -58,6 +58,15 @@
   box-shadow: 0 0 8px var(--accent);
 }
 
+.connectedDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success);
+  margin-left: var(--space-1);
+}
+
 .subtitle {
   color: var(--text-muted);
   font-size: 13px;

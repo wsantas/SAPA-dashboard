@@ -24,7 +24,6 @@ describe('AnalyticsSchema', () => {
     const parsed = AnalyticsSchema.parse(validAnalyticsFixture)
     expect(parsed).not.toHaveProperty('session_types')
     expect(parsed).not.toHaveProperty('weekly_chart')
-    expect(parsed).not.toHaveProperty('daily_activity')
     expect(parsed).not.toHaveProperty('topic_frequency')
   })
 
