@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react'
-import type { Analytics, AsyncState } from './types'
-import { DEMO_MODE, fetchAnalytics } from './api'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import type { Analytics, AsyncState, Profile } from './types'
+import { DEMO_MODE, fetchAnalytics, fetchProfiles, setActiveProfileId } from './api'
 import { useAsyncData } from './useAsyncData'
 import { useWebSocket } from './useWebSocket'
 import type { WsEvent } from './useWebSocket'
@@ -12,11 +12,27 @@ import { ActivityHeatmap } from './components/ActivityHeatmap'
 import { TopicsExplorer } from './components/TopicsExplorer'
 import { InsightsCard } from './components/InsightsCard'
 import { LiveToast } from './components/LiveToast'
+import { ProfileSwitcher } from './components/ProfileSwitcher'
 import styles from './App.module.css'
 
 function App() {
+  const [profiles, setProfiles] = useState<readonly Profile[]>([])
+  const [activeProfile, setActiveProfile] = useState<number>(1)
   const { state, refetch } = useAsyncData(fetchAnalytics)
   const { lastEvent, connected } = useWebSocket()
+
+  useEffect(() => {
+    fetchProfiles().then(setProfiles).catch(() => {})
+  }, [])
+
+  const handleProfileSwitch = useCallback(
+    (id: number) => {
+      setActiveProfileId(id)
+      setActiveProfile(id)
+      refetch()
+    },
+    [refetch],
+  )
 
   const prevEventRef = useRef<WsEvent | null>(null)
   useEffect(() => {
@@ -48,12 +64,21 @@ function App() {
             </div>
             <p className={styles.subtitle}>Spaced-repetition analytics</p>
           </div>
-          <button type="button" className={styles.button} onClick={refetch}>
-            Refresh
-          </button>
+          <div className={styles.headerActions}>
+            {profiles.length > 1 && (
+              <ProfileSwitcher
+                profiles={profiles}
+                activeId={activeProfile}
+                onSwitch={handleProfileSwitch}
+              />
+            )}
+            <button type="button" className={styles.button} onClick={refetch}>
+              Refresh
+            </button>
+          </div>
         </header>
         <main>
-          <Body state={state} />
+          <Body state={state} profileKey={activeProfile} />
         </main>
       </div>
       <LiveToast event={lastEvent} />
@@ -61,7 +86,13 @@ function App() {
   )
 }
 
-function Body({ state }: { state: AsyncState<Analytics> }) {
+function Body({
+  state,
+  profileKey,
+}: {
+  state: AsyncState<Analytics>
+  profileKey: number
+}) {
   switch (state.status) {
     case 'idle':
       return null
@@ -93,7 +124,7 @@ function Body({ state }: { state: AsyncState<Analytics> }) {
         daily_activity,
       } = state.data
       return (
-        <div className={styles.grid}>
+        <div className={styles.grid} key={profileKey}>
           <StreakCard overview={overview} />
           <ConfidenceBreakdown distribution={confidence_distribution} />
           <DueReviewsList reviews={due_reviews} />

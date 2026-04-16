@@ -2,25 +2,34 @@ import { z } from 'zod'
 import {
   AnalyticsSchema,
   InsightsResponseSchema,
+  ProfileSchema,
   TopicSchema,
   type Analytics,
   type InsightsResponse,
+  type Profile,
   type Topic,
 } from './types'
-import { demoAnalytics, demoInsights } from './demo'
+import { demoAnalytics, demoInsights, demoProfiles } from './demo'
 
 const TopicsSchema = z.array(TopicSchema)
+const ProfilesSchema = z.array(ProfileSchema)
 
 const API_BASE: string = import.meta.env['VITE_API_BASE'] ?? 'http://localhost:8002'
 
 export const DEMO_MODE: boolean = import.meta.env['VITE_DEMO_MODE'] === 'true'
+
+export function setActiveProfileId(id: number): void {
+  document.cookie = `profile_id=${id}; path=/; SameSite=Lax`
+}
 
 function simulateNetwork<T>(value: T, ms = 400): Promise<T> {
   return new Promise((resolve) => setTimeout(() => resolve(value), ms))
 }
 
 async function apiGet<T>(path: string, schema: z.ZodType<T>): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`)
+  const response = await fetch(`${API_BASE}${path}`, {
+    credentials: 'include',
+  })
   if (!response.ok) {
     throw new Error(
       `GET ${path} failed: ${response.status} ${response.statusText}`,
@@ -34,6 +43,7 @@ async function apiPost<T>(path: string, schema: z.ZodType<T>): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
   })
   if (!response.ok) {
     let detail = ''
@@ -59,6 +69,11 @@ function parseOrThrow<T>(path: string, schema: z.ZodType<T>, raw: unknown): T {
     )
   }
   return parsed.data
+}
+
+export function fetchProfiles(): Promise<Profile[]> {
+  if (DEMO_MODE) return simulateNetwork(demoProfiles)
+  return apiGet('/api/profiles', ProfilesSchema)
 }
 
 export function fetchAnalytics(): Promise<Analytics> {

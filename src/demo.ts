@@ -1,4 +1,9 @@
-import type { Analytics, InsightsResponse } from './types'
+import type { Analytics, InsightsResponse, Profile } from './types'
+
+export const demoProfiles: Profile[] = [
+  { id: 1, name: 'john', display_name: 'John' },
+  { id: 2, name: 'jane', display_name: 'Jane' },
+]
 
 export const demoAnalytics: Analytics = {
   overview: {

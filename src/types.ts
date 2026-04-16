@@ -71,3 +71,11 @@ export const InsightsResponseSchema = z.object({
 
 export type Insight = z.infer<typeof InsightSchema>
 export type InsightsResponse = z.infer<typeof InsightsResponseSchema>
+
+export const ProfileSchema = z.object({
+  id: z.number().int(),
+  name: z.string(),
+  display_name: z.string(),
+})
+
+export type Profile = z.infer<typeof ProfileSchema>
