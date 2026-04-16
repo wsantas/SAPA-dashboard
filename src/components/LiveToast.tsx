@@ -10,22 +10,38 @@ const DISPLAY_MS = 4000
 const EXIT_MS = 300
 
 const EVENT_ICONS: Record<string, string> = {
+  connected: '\u{1F50C}',
   file_created: '\u{1F4C4}',
   file_modified: '\u270F\uFE0F',
   file_deleted: '\u{1F5D1}\uFE0F',
+  topics_extracted: '\u{1F9E0}',
+  session_recorded: '\u{2705}',
 }
 
-function basename(filePath: string): string {
-  const segments = filePath.split('/')
-  return segments[segments.length - 1] ?? filePath
+function extractLabel(event: WsEvent): string {
+  const data = event.data
+  if (typeof data['path'] === 'string') {
+    const segments = data['path'].split('/')
+    return segments[segments.length - 1] ?? event.event
+  }
+  if (typeof data['file'] === 'string') {
+    const segments = data['file'].split('/')
+    return segments[segments.length - 1] ?? event.event
+  }
+  if (typeof data['watch_path'] === 'string') return 'WebSocket connected'
+  return event.event.replace(/_/g, ' ')
 }
 
-function formatTime(timestamp: string): string {
-  const date = new Date(timestamp)
-  if (isNaN(date.getTime())) return ''
-  const hh = String(date.getHours()).padStart(2, '0')
-  const mm = String(date.getMinutes()).padStart(2, '0')
-  return `${hh}:${mm}`
+function extractTime(event: WsEvent): string {
+  const ts = event.data['timestamp']
+  if (typeof ts === 'string') {
+    const date = new Date(ts)
+    if (!isNaN(date.getTime())) {
+      return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+    }
+  }
+  const now = new Date()
+  return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
 }
 
 type ToastState = {
@@ -85,9 +101,9 @@ export function LiveToast({ event }: Props) {
 
   if (state.phase === 'hidden' || !state.displayed) return null
 
-  const icon = EVENT_ICONS[state.displayed.type] ?? '\u{1F4E1}'
-  const name = basename(state.displayed.path)
-  const time = formatTime(state.displayed.timestamp)
+  const icon = EVENT_ICONS[state.displayed.event] ?? '\u{1F4E1}'
+  const name = extractLabel(state.displayed)
+  const time = extractTime(state.displayed)
 
   return (
     <div

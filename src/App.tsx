@@ -18,10 +18,14 @@ function App() {
   const { state, refetch } = useAsyncData(fetchAnalytics)
   const { lastEvent, connected } = useWebSocket()
 
-  // Auto-refetch when a WebSocket event arrives and data is loaded
   const prevEventRef = useRef<WsEvent | null>(null)
   useEffect(() => {
-    if (lastEvent && lastEvent !== prevEventRef.current && state.status === 'success') {
+    if (
+      lastEvent &&
+      lastEvent !== prevEventRef.current &&
+      lastEvent.event !== 'connected' &&
+      state.status === 'success'
+    ) {
       refetch()
     }
     prevEventRef.current = lastEvent

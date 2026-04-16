@@ -3,9 +3,8 @@ import { z } from 'zod'
 import { DEMO_MODE } from './api'
 
 export const WsEventSchema = z.object({
-  type: z.string(),
-  path: z.string(),
-  timestamp: z.string(),
+  event: z.string(),
+  data: z.record(z.string(), z.unknown()),
 })
 
 export type WsEvent = z.infer<typeof WsEventSchema>
