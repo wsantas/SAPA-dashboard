@@ -1,3 +1,7 @@
+import { useEffect, useState } from 'react'
+import { fetchHistory } from '../api'
+import { trackEvent } from '../analytics'
+import type { HistoryEntry } from '../types'
 import styles from './Card.module.css'
 import heatStyles from './ActivityHeatmap.module.css'
 
@@ -37,53 +41,40 @@ function formatDate(d: Date): string {
 }
 
 const MONTH_SHORT = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
 ] as const
+
+const DISPLAY_DATE = new Intl.DateTimeFormat(undefined, {
+  weekday: 'short',
+  month: 'short',
+  day: 'numeric',
+})
 
 function formatTooltip(d: Date, count: number): string {
   const month = MONTH_SHORT[d.getMonth()]
   return `${month ?? ''} ${d.getDate()}: ${count} session${count === 1 ? '' : 's'}`
 }
 
-/**
- * Build the 13-week × 7-day grid working backward from today.
- * Returns cells in column-major order (each column = 1 week).
- */
+type CellData = {
+  date: Date
+  iso: string
+  count: number
+  col: number
+  row: number
+}
+
 function buildGrid(
   dailyActivity: Readonly<Record<string, number>>,
   today: Date,
 ) {
-  const totalDays = COLS * ROWS // 91 days
-
-  // End date is today; find the Monday of the week that is 12 weeks before this week.
-  // Today's day-of-week as Mon=0..Sun=6
+  const totalDays = COLS * ROWS
   const todayDow = (today.getDay() + 6) % 7
-  const endOffset = 6 - todayDow // days from today to reach Sunday of this week
-  // The grid ends at Sunday of the current week
+  const endOffset = 6 - todayDow
   const gridEnd = new Date(today)
   gridEnd.setDate(gridEnd.getDate() + endOffset)
-
   const gridStart = new Date(gridEnd)
   gridStart.setDate(gridStart.getDate() - totalDays + 1)
-
-  type CellData = {
-    date: Date
-    iso: string
-    count: number
-    col: number
-    row: number
-  }
 
   const cells: CellData[] = []
   const monthLabels: { col: number; label: string }[] = []
@@ -98,7 +89,6 @@ function buildGrid(
     const count = dailyActivity[iso] ?? 0
     cells.push({ date: d, iso, count, col, row })
 
-    // Month label: first cell of a column whose month differs from previous column
     if (row === 0 && d.getMonth() !== prevMonth) {
       monthLabels.push({ col, label: MONTH_SHORT[d.getMonth()] ?? '' })
       prevMonth = d.getMonth()
@@ -113,15 +103,39 @@ export function ActivityHeatmap({ dailyActivity }: ActivityHeatmapProps) {
   const { cells, monthLabels } = buildGrid(dailyActivity, today)
   const totalSessions = cells.reduce((sum, c) => sum + c.count, 0)
 
-  const headingId = 'heatmap-heading'
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [history, setHistory] = useState<readonly HistoryEntry[]>([])
+  const [historyLoaded, setHistoryLoaded] = useState(false)
+
+  useEffect(() => {
+    if (!selectedDate) return
+    if (historyLoaded) return
+    fetchHistory()
+      .then((data) => {
+        setHistory(data)
+        setHistoryLoaded(true)
+      })
+      .catch(() => {})
+  }, [selectedDate, historyLoaded])
+
+  function handleCellClick(iso: string, count: number) {
+    if (count === 0) return
+    const next = selectedDate === iso ? null : iso
+    setSelectedDate(next)
+    if (next) trackEvent('heatmap_day_clicked', { date: iso, count })
+  }
+
+  const sessionsForDate = selectedDate
+    ? history.filter((h) => h.created_at.startsWith(selectedDate))
+    : []
 
   return (
     <section
       className={`${styles.card} ${heatStyles.heatmapCard}`}
-      aria-labelledby={headingId}
+      aria-labelledby="heatmap-heading"
     >
       <div className={heatStyles.header}>
-        <h2 id={headingId} className={styles.heading}>
+        <h2 id="heatmap-heading" className={styles.heading}>
           Activity
         </h2>
         <div className={heatStyles.summary}>
@@ -137,7 +151,6 @@ export function ActivityHeatmap({ dailyActivity }: ActivityHeatmapProps) {
         aria-label={`Activity heatmap showing ${totalSessions} sessions over the last 90 days.`}
         preserveAspectRatio="xMidYMid meet"
       >
-        {/* Day-of-week labels */}
         {DAY_LABELS.map(([row, label]) => (
           <text
             key={label}
@@ -150,7 +163,6 @@ export function ActivityHeatmap({ dailyActivity }: ActivityHeatmapProps) {
           </text>
         ))}
 
-        {/* Month labels */}
         {monthLabels.map(({ col, label }) => (
           <text
             key={`${col}-${label}`}
@@ -162,7 +174,6 @@ export function ActivityHeatmap({ dailyActivity }: ActivityHeatmapProps) {
           </text>
         ))}
 
-        {/* Cells */}
         {cells.map((cell) => (
           <rect
             key={cell.iso}
@@ -173,12 +184,66 @@ export function ActivityHeatmap({ dailyActivity }: ActivityHeatmapProps) {
             rx={2}
             ry={2}
             fill={getColor(cell.count)}
-            className={heatStyles.cell}
+            className={
+              cell.count > 0
+                ? selectedDate === cell.iso
+                  ? heatStyles.cellSelected
+                  : heatStyles.cellClickable
+                : heatStyles.cell
+            }
+            onClick={() => handleCellClick(cell.iso, cell.count)}
           >
             <title>{formatTooltip(cell.date, cell.count)}</title>
           </rect>
         ))}
       </svg>
+
+      {selectedDate && (
+        <div className={heatStyles.detail}>
+          <div className={heatStyles.detailHeader}>
+            <span className={heatStyles.detailDate}>
+              {DISPLAY_DATE.format(new Date(selectedDate + 'T12:00:00'))}
+            </span>
+            <span className={heatStyles.detailCount}>
+              {dailyActivity[selectedDate] ?? 0} topics
+            </span>
+            <button
+              type="button"
+              className={heatStyles.detailClose}
+              onClick={() => setSelectedDate(null)}
+              aria-label="Close detail"
+            >
+              ×
+            </button>
+          </div>
+          {sessionsForDate.length === 0 ? (
+            <p className={heatStyles.detailEmpty}>
+              {historyLoaded
+                ? 'No session records for this date.'
+                : 'Loading…'}
+            </p>
+          ) : (
+            <ul className={heatStyles.detailList}>
+              {sessionsForDate.map((session) => (
+                <li key={session.id} className={heatStyles.detailItem}>
+                  <span className={heatStyles.detailBadge}>
+                    {session.session_type}
+                  </span>
+                  <span className={heatStyles.detailTopic}>
+                    {session.topic}
+                  </span>
+                  <span className={heatStyles.detailTime}>
+                    {new Date(session.created_at).toLocaleTimeString(
+                      undefined,
+                      { hour: '2-digit', minute: '2-digit' },
+                    )}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
     </section>
   )
 }

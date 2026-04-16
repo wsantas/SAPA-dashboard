@@ -101,6 +101,16 @@ VITE_DEMO_MODE=true npm run dev
 
 You can also override the API base URL with `VITE_API_BASE` if SAPA is running somewhere other than `http://localhost:8002`.
 
+### PostHog analytics (optional)
+
+Set `VITE_POSTHOG_KEY` to enable event tracking, autocapture, session replay, and feature flags. The deployed demo uses this to dogfood PostHog on a dashboard built against a PostHog-stack-alike backend. Without the env var set, `trackEvent()` calls silently no-op on the PostHog side and continue to populate the in-app Dashboard Analytics widget as before.
+
+```bash
+VITE_POSTHOG_KEY=phc_xxx VITE_DEMO_MODE=true npm run dev
+```
+
+See `.env.example` for all supported variables.
+
 ## Scripts
 
 | Command | What it does |
@@ -157,6 +167,10 @@ I kept the scope tight. Things I considered and declined until there's a concret
 - **No barrel `index.ts` files** — they complicate tree-shaking and don't help readability at this scale
 - **No CSS-in-JS runtime** — plain CSS Modules are cheaper, faster, and the TS story is fine
 - **No client-side routing layer for the demo** — `VITE_DEMO_MODE` flips at build time, not at request time
+
+## Analytics
+
+When `VITE_POSTHOG_KEY` is set, this dashboard sends autocaptured interaction events and session replays to [PostHog](https://posthog.com). No SAPA content (topic text, session notes, AI insight responses) is sent — only dashboard-usage telemetry (clicks, profile switches, timings).
 
 ## License
 

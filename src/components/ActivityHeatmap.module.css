@@ -50,11 +50,135 @@
 }
 
 .cell {
-  rx: 2;
-  ry: 2;
   transition: opacity 160ms ease;
 }
 
-.cell:hover {
+.cellClickable {
+  cursor: pointer;
+  transition: opacity 160ms ease, stroke 160ms ease;
+}
+
+.cellClickable:hover {
   opacity: 0.8;
+  stroke: var(--text-muted);
+  stroke-width: 1;
+}
+
+.cellSelected {
+  cursor: pointer;
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+/* Day detail panel */
+
+.detail {
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  animation: slideDown 200ms ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.detailHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.detailDate {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.detailCount {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-family: var(--font-mono);
+}
+
+.detailClose {
+  margin-left: auto;
+  color: var(--text-dim);
+  font-size: 18px;
+  line-height: 1;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  transition: color 120ms ease, background-color 120ms ease;
+}
+
+.detailClose:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.detailEmpty {
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: var(--space-3) 0;
+}
+
+.detailList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.detailItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.detailItem:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.detailBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.detailTopic {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detailTime {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+  white-space: nowrap;
 }

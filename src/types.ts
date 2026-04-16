@@ -72,6 +72,18 @@ export const InsightsResponseSchema = z.object({
 export type Insight = z.infer<typeof InsightSchema>
 export type InsightsResponse = z.infer<typeof InsightsResponseSchema>
 
+export const HistoryEntrySchema = z.object({
+  id: z.number().int(),
+  session_type: z.string(),
+  topic: z.string(),
+  prompt: z.string(),
+  response: z.string(),
+  notes: z.string().nullable(),
+  created_at: z.string(),
+})
+
+export type HistoryEntry = z.infer<typeof HistoryEntrySchema>
+
 export const ProfileSchema = z.object({
   id: z.number().int(),
   name: z.string(),

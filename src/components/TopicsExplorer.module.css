@@ -27,7 +27,7 @@
 }
 
 .scroll {
-  max-height: 360px;
+  max-height: 420px;
   overflow-y: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -103,18 +103,94 @@
   color: var(--accent);
 }
 
-.table tbody tr {
+/* Row states */
+
+.rowClickable {
   border-bottom: 1px solid var(--border);
+  cursor: pointer;
   transition: background-color 120ms ease;
 }
 
-.table tbody tr:last-child {
-  border-bottom: none;
-}
-
-.table tbody tr:hover {
+.rowClickable:hover {
   background: rgba(255, 255, 255, 0.02);
 }
+
+.rowExpanded {
+  border-bottom: none;
+  background: rgba(245, 78, 0, 0.04);
+  cursor: pointer;
+}
+
+.rowExpanded:hover {
+  background: rgba(245, 78, 0, 0.06);
+}
+
+/* Detail expansion */
+
+.detailRow {
+  background: rgba(245, 78, 0, 0.02);
+  border-bottom: 1px solid var(--border);
+}
+
+.detailRow td {
+  padding: 0;
+}
+
+.detail {
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  animation: expandIn 200ms ease;
+}
+
+@keyframes expandIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--space-4) var(--space-6);
+}
+
+.detailStat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.detailLabel {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+}
+
+.detailValue {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.confidenceBar {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: var(--space-1);
+}
+
+.confidenceFill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Standard cells */
 
 .cellLeft,
 .cellRight {

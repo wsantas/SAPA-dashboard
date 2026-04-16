@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { fetchInsights } from '../api'
+import { trackEvent } from '../analytics'
 import type { AsyncState, InsightsResponse } from '../types'
 import styles from './Card.module.css'
 import insightStyles from './InsightsCard.module.css'
@@ -10,6 +11,9 @@ export function InsightsCard() {
   })
 
   function generate() {
+    trackEvent(
+      state.status === 'success' ? 'insights_regenerated' : 'insights_generated',
+    )
     setState({ status: 'loading' })
     fetchInsights()
       .then((data) => setState({ status: 'success', data }))

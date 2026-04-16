@@ -1,0 +1,213 @@
+.usageCard {
+  grid-column: 1 / -1;
+  gap: var(--space-4);
+  background: linear-gradient(
+    135deg,
+    var(--surface) 0%,
+    rgba(245, 78, 0, 0.03) 100%
+  );
+  border-color: rgba(245, 78, 0, 0.2);
+}
+
+.usageCard:hover {
+  border-color: rgba(245, 78, 0, 0.35);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sessionTimer {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.timerDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success);
+  animation: pulse 2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.statsRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.statValue {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.1;
+}
+
+.statLabel {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+}
+
+.subheading {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: var(--space-3);
+}
+
+/* Breakdown bars */
+
+.breakdown {
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.barRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.barIcon {
+  font-size: 14px;
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.barLabel {
+  font-size: 12px;
+  color: var(--text);
+  width: 140px;
+  flex-shrink: 0;
+}
+
+.barTrack {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+  transition: width 300ms ease;
+  min-width: 4px;
+}
+
+.barCount {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  width: 24px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Event log */
+
+.log {
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+
+.logScroll {
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.logScroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.logScroll::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 3px;
+}
+
+.logEntry {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  font-size: 12px;
+}
+
+.logEntry:last-child {
+  border-bottom: none;
+}
+
+.logTime {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.logIcon {
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.logName {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.logProps {
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.empty {
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: center;
+  padding: var(--space-6);
+}

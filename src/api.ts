@@ -1,38 +1,45 @@
 import { z } from 'zod'
 import {
   AnalyticsSchema,
+  HistoryEntrySchema,
   InsightsResponseSchema,
   ProfileSchema,
   TopicSchema,
   type Analytics,
+  type HistoryEntry,
   type InsightsResponse,
   type Profile,
   type Topic,
 } from './types'
 import {
-  demoAnalytics,
-  demoAnalyticsJane,
-  demoInsights,
-  demoInsightsJane,
+  DEFAULT_DEMO_PROFILE_ID,
+  demoDataByProfile,
   demoProfiles,
+  type ProfileDemoData,
 } from './demo'
 
 const TopicsSchema = z.array(TopicSchema)
 const ProfilesSchema = z.array(ProfileSchema)
+const HistorySchema = z.array(HistoryEntrySchema)
 
-const API_BASE: string = import.meta.env['VITE_API_BASE'] ?? 'http://localhost:8002'
+const API_BASE: string =
+  import.meta.env['VITE_API_BASE'] ?? 'http://localhost:8002'
 
-export const DEMO_MODE: boolean = import.meta.env['VITE_DEMO_MODE'] === 'true'
+export const DEMO_MODE: boolean =
+  import.meta.env['VITE_DEMO_MODE'] === 'true'
 
-let _activeProfileId = 1
+let _activeProfileId = DEFAULT_DEMO_PROFILE_ID
 
 export function setActiveProfileId(id: number): void {
   _activeProfileId = id
   document.cookie = `profile_id=${id}; path=/; SameSite=Lax`
 }
 
-function isJane(): boolean {
-  return _activeProfileId === 2
+function getDemoBundle(): ProfileDemoData {
+  return (
+    demoDataByProfile[_activeProfileId] ??
+    demoDataByProfile[DEFAULT_DEMO_PROFILE_ID]!
+  )
 }
 
 function simulateNetwork<T>(value: T, ms = 400): Promise<T> {
@@ -90,17 +97,21 @@ export function fetchProfiles(): Promise<Profile[]> {
 }
 
 export function fetchAnalytics(): Promise<Analytics> {
-  if (DEMO_MODE) return simulateNetwork(isJane() ? demoAnalyticsJane : demoAnalytics)
+  if (DEMO_MODE) return simulateNetwork(getDemoBundle().analytics)
   return apiGet('/api/analytics', AnalyticsSchema)
 }
 
 export function fetchTopics(): Promise<Topic[]> {
-  const data = isJane() ? demoAnalyticsJane : demoAnalytics
-  if (DEMO_MODE) return simulateNetwork(data.topics as Topic[])
+  if (DEMO_MODE) return simulateNetwork([...getDemoBundle().topics])
   return apiGet('/api/topics', TopicsSchema)
 }
 
+export function fetchHistory(): Promise<HistoryEntry[]> {
+  if (DEMO_MODE) return simulateNetwork([...getDemoBundle().history])
+  return apiGet('/api/history?limit=200', HistorySchema)
+}
+
 export function fetchInsights(): Promise<InsightsResponse> {
-  if (DEMO_MODE) return simulateNetwork(isJane() ? demoInsightsJane : demoInsights, 1200)
+  if (DEMO_MODE) return simulateNetwork(getDemoBundle().insights, 1200)
   return apiPost('/api/ai/insights', InsightsResponseSchema)
 }

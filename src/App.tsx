@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Analytics, AsyncState, Profile } from './types'
 import { DEMO_MODE, fetchAnalytics, fetchProfiles, setActiveProfileId } from './api'
+import { trackEvent } from './analytics'
 import { useAsyncData } from './useAsyncData'
+import { useFeatureFlag } from './useFeatureFlag'
 import { useWebSocket } from './useWebSocket'
 import type { WsEvent } from './useWebSocket'
 import { StreakCard } from './components/StreakCard'
@@ -11,8 +13,10 @@ import { WeeklyActivityChart } from './components/WeeklyActivityChart'
 import { ActivityHeatmap } from './components/ActivityHeatmap'
 import { TopicsExplorer } from './components/TopicsExplorer'
 import { InsightsCard } from './components/InsightsCard'
+import { UsageAnalytics } from './components/UsageAnalytics'
 import { LiveToast } from './components/LiveToast'
 import { ProfileSwitcher } from './components/ProfileSwitcher'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import styles from './App.module.css'
 
 function App() {
@@ -29,10 +33,16 @@ function App() {
     (id: number) => {
       setActiveProfileId(id)
       setActiveProfile(id)
+      trackEvent('profile_switched', { profile_id: id })
       refetch()
     },
     [refetch],
   )
+
+  const handleRefresh = useCallback(() => {
+    trackEvent('refresh_clicked')
+    refetch()
+  }, [refetch])
 
   const prevEventRef = useRef<WsEvent | null>(null)
   useEffect(() => {
@@ -72,7 +82,7 @@ function App() {
                 onSwitch={handleProfileSwitch}
               />
             )}
-            <button type="button" className={styles.button} onClick={refetch}>
+            <button type="button" className={styles.button} onClick={handleRefresh}>
               Refresh
             </button>
           </div>
@@ -93,6 +103,11 @@ function Body({
   state: AsyncState<Analytics>
   profileKey: number
 }) {
+  // Default is "on" — the flag exists so it can be flipped off from
+  // PostHog's dashboard during a demo without redeploying.
+  const showAiInsights = useFeatureFlag('show_ai_insights', true)
+
+
   switch (state.status) {
     case 'idle':
       return null
@@ -125,13 +140,32 @@ function Body({
       } = state.data
       return (
         <div className={styles.grid} key={profileKey}>
-          <StreakCard overview={overview} />
-          <ConfidenceBreakdown distribution={confidence_distribution} />
-          <DueReviewsList reviews={due_reviews} />
-          <WeeklyActivityChart weeks={weekly_totals} />
-          <ActivityHeatmap dailyActivity={daily_activity} />
-          <TopicsExplorer />
-          <InsightsCard />
+          <ErrorBoundary label="Streak">
+            <StreakCard overview={overview} />
+          </ErrorBoundary>
+          <ErrorBoundary label="Confidence">
+            <ConfidenceBreakdown distribution={confidence_distribution} />
+          </ErrorBoundary>
+          <ErrorBoundary label="Due Reviews">
+            <DueReviewsList reviews={due_reviews} />
+          </ErrorBoundary>
+          <ErrorBoundary label="Weekly Activity">
+            <WeeklyActivityChart weeks={weekly_totals} />
+          </ErrorBoundary>
+          <ErrorBoundary label="Activity Heatmap">
+            <ActivityHeatmap dailyActivity={daily_activity} />
+          </ErrorBoundary>
+          <ErrorBoundary label="Topics">
+            <TopicsExplorer />
+          </ErrorBoundary>
+          {showAiInsights && (
+            <ErrorBoundary label="AI Insights">
+              <InsightsCard />
+            </ErrorBoundary>
+          )}
+          <ErrorBoundary label="Dashboard Analytics">
+            <UsageAnalytics />
+          </ErrorBoundary>
         </div>
       )
     }

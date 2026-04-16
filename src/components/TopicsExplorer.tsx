@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { fetchTopics } from '../api'
+import { trackEvent } from '../analytics'
 import { useAsyncData } from '../useAsyncData'
 import type { Topic } from '../types'
 import styles from './Card.module.css'
@@ -15,9 +16,16 @@ type Column = {
   readonly format: (topic: Topic) => string
 }
 
-const NEXT_REVIEW_FORMAT = new Intl.DateTimeFormat(undefined, {
+const DATE_FORMAT = new Intl.DateTimeFormat(undefined, {
   month: 'short',
   day: 'numeric',
+})
+
+const DATETIME_FORMAT = new Intl.DateTimeFormat(undefined, {
+  month: 'short',
+  day: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
 })
 
 const COLUMNS: readonly Column[] = [
@@ -43,7 +51,7 @@ const COLUMNS: readonly Column[] = [
     key: 'next_review',
     label: 'Next',
     align: 'right',
-    format: (t) => NEXT_REVIEW_FORMAT.format(new Date(t.next_review)),
+    format: (t) => DATE_FORMAT.format(new Date(t.next_review)),
   },
 ]
 
@@ -67,10 +75,37 @@ function sortTopics(
   return copy
 }
 
+function confidenceLabel(score: number): string {
+  if (score >= 0.8) return 'Mastered'
+  if (score >= 0.6) return 'Strong'
+  if (score >= 0.3) return 'Learning'
+  return 'Weak'
+}
+
+function confidenceColor(score: number): string {
+  if (score >= 0.8) return 'var(--success)'
+  if (score >= 0.6) return 'var(--success-strong)'
+  if (score >= 0.3) return 'var(--warning)'
+  return 'var(--danger)'
+}
+
+function daysUntil(iso: string): string {
+  const now = new Date()
+  const target = new Date(iso)
+  const diff = Math.ceil(
+    (target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+  )
+  if (diff < 0) return `${Math.abs(diff)}d overdue`
+  if (diff === 0) return 'today'
+  if (diff === 1) return 'tomorrow'
+  return `in ${diff} days`
+}
+
 export function TopicsExplorer() {
   const { state } = useAsyncData(fetchTopics)
   const [sortKey, setSortKey] = useState<SortKey>('review_count')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
+  const [expandedTopic, setExpandedTopic] = useState<string | null>(null)
 
   const sorted = useMemo(() => {
     const topics = state.status === 'success' ? state.data : []
@@ -84,6 +119,12 @@ export function TopicsExplorer() {
       setSortKey(key)
       setSortDir(key === 'name' ? 'asc' : 'desc')
     }
+  }
+
+  function handleRowClick(topicName: string) {
+    const next = expandedTopic === topicName ? null : topicName
+    setExpandedTopic(next)
+    if (next) trackEvent('topic_expanded', { topic: topicName })
   }
 
   return (
@@ -131,7 +172,10 @@ export function TopicsExplorer() {
                     >
                       {col.label}
                       {sortKey === col.key && (
-                        <span className={topicStyles.sortIcon} aria-hidden="true">
+                        <span
+                          className={topicStyles.sortIcon}
+                          aria-hidden="true"
+                        >
                           {sortDir === 'asc' ? '▲' : '▼'}
                         </span>
                       )}
@@ -142,25 +186,100 @@ export function TopicsExplorer() {
             </thead>
             <tbody>
               {sorted.map((topic) => (
-                <tr key={topic.name}>
-                  {COLUMNS.map((col) => (
-                    <td
-                      key={col.key}
-                      className={
-                        col.align === 'right'
-                          ? topicStyles.cellRight
-                          : topicStyles.cellLeft
-                      }
-                    >
-                      {col.format(topic)}
-                    </td>
-                  ))}
-                </tr>
+                <TopicRow
+                  key={topic.name}
+                  topic={topic}
+                  expanded={expandedTopic === topic.name}
+                  onClick={() => handleRowClick(topic.name)}
+                />
               ))}
             </tbody>
           </table>
         </div>
       )}
     </section>
+  )
+}
+
+function TopicRow({
+  topic,
+  expanded,
+  onClick,
+}: {
+  topic: Topic
+  expanded: boolean
+  onClick: () => void
+}) {
+  return (
+    <>
+      <tr
+        className={expanded ? topicStyles.rowExpanded : topicStyles.rowClickable}
+        onClick={onClick}
+      >
+        {COLUMNS.map((col) => (
+          <td
+            key={col.key}
+            className={
+              col.align === 'right'
+                ? topicStyles.cellRight
+                : topicStyles.cellLeft
+            }
+          >
+            {col.format(topic)}
+          </td>
+        ))}
+      </tr>
+      {expanded && (
+        <tr className={topicStyles.detailRow}>
+          <td colSpan={COLUMNS.length}>
+            <div className={topicStyles.detail}>
+              <div className={topicStyles.detailGrid}>
+                <div className={topicStyles.detailStat}>
+                  <span className={topicStyles.detailLabel}>Confidence</span>
+                  <div className={topicStyles.confidenceBar}>
+                    <div
+                      className={topicStyles.confidenceFill}
+                      style={{
+                        width: `${Math.round(topic.confidence_score * 100)}%`,
+                        background: confidenceColor(topic.confidence_score),
+                      }}
+                    />
+                  </div>
+                  <span className={topicStyles.detailValue}>
+                    {Math.round(topic.confidence_score * 100)}% —{' '}
+                    {confidenceLabel(topic.confidence_score)}
+                  </span>
+                </div>
+                <div className={topicStyles.detailStat}>
+                  <span className={topicStyles.detailLabel}>First learned</span>
+                  <span className={topicStyles.detailValue}>
+                    {DATETIME_FORMAT.format(new Date(topic.first_learned))}
+                  </span>
+                </div>
+                <div className={topicStyles.detailStat}>
+                  <span className={topicStyles.detailLabel}>Last reviewed</span>
+                  <span className={topicStyles.detailValue}>
+                    {DATETIME_FORMAT.format(new Date(topic.last_reviewed))}
+                  </span>
+                </div>
+                <div className={topicStyles.detailStat}>
+                  <span className={topicStyles.detailLabel}>Next review</span>
+                  <span className={topicStyles.detailValue}>
+                    {DATE_FORMAT.format(new Date(topic.next_review))} (
+                    {daysUntil(topic.next_review)})
+                  </span>
+                </div>
+                <div className={topicStyles.detailStat}>
+                  <span className={topicStyles.detailLabel}>Review count</span>
+                  <span className={topicStyles.detailValue}>
+                    {topic.review_count}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </td>
+        </tr>
+      )}
+    </>
   )
 }
