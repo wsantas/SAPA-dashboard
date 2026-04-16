@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useReducer } from 'react'
 import type { AsyncState } from './types'
 
 export type UseAsyncDataResult<T> = {
@@ -9,20 +9,45 @@ export type UseAsyncDataResult<T> = {
 export function useAsyncData<T>(
   fetcher: () => Promise<T>,
 ): UseAsyncDataResult<T> {
-  const [state, setState] = useState<AsyncState<T>>({ status: 'loading' })
-  const [version, setVersion] = useState(0)
+  type State = { async: AsyncState<T>; version: number }
+  type Action =
+    | { type: 'refetch-requested' }
+    | { type: 'resolved'; data: T }
+    | { type: 'rejected'; error: Error }
+
+  const reducer = (prev: State, action: Action): State => {
+    switch (action.type) {
+      case 'refetch-requested':
+        return { async: { status: 'loading' }, version: prev.version + 1 }
+      case 'resolved':
+        return { ...prev, async: { status: 'success', data: action.data } }
+      case 'rejected':
+        return { ...prev, async: { status: 'error', error: action.error } }
+      default: {
+        const _exhaustive: never = action
+        return _exhaustive
+      }
+    }
+  }
+
+  const initialState: State = {
+    async: { status: 'loading' },
+    version: 0,
+  }
+
+  const [state, dispatch] = useReducer(reducer, initialState)
 
   useEffect(() => {
     let cancelled = false
 
     fetcher()
       .then((data) => {
-        if (!cancelled) setState({ status: 'success', data })
+        if (!cancelled) dispatch({ type: 'resolved', data })
       })
       .catch((error: unknown) => {
         if (cancelled) return
-        setState({
-          status: 'error',
+        dispatch({
+          type: 'rejected',
           error: error instanceof Error ? error : new Error(String(error)),
         })
       })
@@ -30,12 +55,11 @@ export function useAsyncData<T>(
     return () => {
       cancelled = true
     }
-  }, [fetcher, version])
+  }, [fetcher, state.version])
 
   const refetch = useCallback(() => {
-    setState({ status: 'loading' })
-    setVersion((v) => v + 1)
+    dispatch({ type: 'refetch-requested' })
   }, [])
 
-  return { state, refetch }
+  return { state: state.async, refetch }
 }
