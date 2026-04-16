@@ -14,6 +14,7 @@ import { ActivityHeatmap } from './components/ActivityHeatmap'
 import { TopicsExplorer } from './components/TopicsExplorer'
 import { InsightsCard } from './components/InsightsCard'
 import { UsageAnalytics } from './components/UsageAnalytics'
+import { DashboardSignals } from './components/DashboardSignals'
 import { LiveToast } from './components/LiveToast'
 import { ProfileSwitcher } from './components/ProfileSwitcher'
 import { ErrorBoundary } from './components/ErrorBoundary'
@@ -165,6 +166,9 @@ function Body({
           )}
           <ErrorBoundary label="Dashboard Analytics">
             <UsageAnalytics />
+          </ErrorBoundary>
+          <ErrorBoundary label="Dashboard Signals">
+            <DashboardSignals />
           </ErrorBoundary>
         </div>
       )

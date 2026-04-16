@@ -91,3 +91,18 @@ export const ProfileSchema = z.object({
 })
 
 export type Profile = z.infer<typeof ProfileSchema>
+
+// PostHog HogQL query response shape (from our /api/posthog-query proxy).
+export const SignalsQueryResponseSchema = z.object({
+  queryId: z.string(),
+  columns: z.array(z.string()),
+  results: z.array(z.array(z.unknown())),
+})
+
+export type SignalsQueryResponse = z.infer<typeof SignalsQueryResponseSchema>
+
+export type DashboardSignals = {
+  readonly weeklySessions: number
+  readonly topEvents: ReadonlyArray<{ event: string; count: number }>
+  readonly lastActivityTs: number | null
+}

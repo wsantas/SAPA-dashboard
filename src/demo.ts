@@ -1,5 +1,6 @@
 import type {
   Analytics,
+  DashboardSignals,
   HistoryEntry,
   InsightsResponse,
   Profile,
@@ -595,3 +596,18 @@ export const demoDataByProfile: Record<number, ProfileDemoData> = {
 }
 
 export const DEFAULT_DEMO_PROFILE_ID = 1
+
+// Baked PostHog signals for demo mode — shown to recruiters on the
+// deployed URL. Numbers are plausible for a new project with low
+// volume; updated periodically to keep the demo feeling live.
+export const demoSignals: DashboardSignals = {
+  weeklySessions: 14,
+  topEvents: [
+    { event: 'heatmap_day_clicked', count: 47 },
+    { event: 'topic_expanded', count: 31 },
+    { event: 'profile_switched', count: 18 },
+    { event: 'insights_generated', count: 9 },
+    { event: 'refresh_clicked', count: 6 },
+  ],
+  lastActivityTs: Math.floor(Date.now() / 1000) - 87,
+}

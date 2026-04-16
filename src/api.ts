@@ -4,8 +4,10 @@ import {
   HistoryEntrySchema,
   InsightsResponseSchema,
   ProfileSchema,
+  SignalsQueryResponseSchema,
   TopicSchema,
   type Analytics,
+  type DashboardSignals,
   type HistoryEntry,
   type InsightsResponse,
   type Profile,
@@ -15,6 +17,7 @@ import {
   DEFAULT_DEMO_PROFILE_ID,
   demoDataByProfile,
   demoProfiles,
+  demoSignals,
   type ProfileDemoData,
 } from './demo'
 
@@ -114,4 +117,66 @@ export function fetchHistory(): Promise<HistoryEntry[]> {
 export function fetchInsights(): Promise<InsightsResponse> {
   if (DEMO_MODE) return simulateNetwork(getDemoBundle().insights, 1200)
   return apiPost('/api/ai/insights', InsightsResponseSchema)
+}
+
+/**
+ * Runs a single predefined HogQL query via the Vercel proxy function.
+ * The actual query lives in /api/posthog-query.ts; the client only
+ * specifies which predefined query to run by id.
+ */
+async function runHogQLQuery(
+  queryId: string,
+): Promise<readonly ReadonlyArray<unknown>[]> {
+  const response = await fetch(`/api/posthog-query`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ queryId }),
+  })
+  if (!response.ok) {
+    let detail = ''
+    try {
+      const errBody = (await response.json()) as { error?: unknown }
+      if (typeof errBody.error === 'string') detail = ` — ${errBody.error}`
+    } catch {
+      // ignore
+    }
+    throw new Error(
+      `PostHog query ${queryId} failed: ${response.status} ${response.statusText}${detail}`,
+    )
+  }
+  const raw: unknown = await response.json()
+  const parsed = SignalsQueryResponseSchema.safeParse(raw)
+  if (!parsed.success) {
+    throw new Error(
+      `PostHog query ${queryId} returned invalid shape: ${z.prettifyError(parsed.error)}`,
+    )
+  }
+  return parsed.data.results
+}
+
+export async function fetchDashboardSignals(): Promise<DashboardSignals> {
+  if (DEMO_MODE) return simulateNetwork(demoSignals, 600)
+
+  const [weeklyRes, topRes, lastRes] = await Promise.all([
+    runHogQLQuery('weekly_sessions'),
+    runHogQLQuery('top_events'),
+    runHogQLQuery('last_activity'),
+  ])
+
+  const weeklySessions =
+    typeof weeklyRes[0]?.[0] === 'number' ? weeklyRes[0][0] : 0
+
+  const topEvents = topRes.flatMap((row) => {
+    const event = row[0]
+    const count = row[1]
+    if (typeof event === 'string' && typeof count === 'number') {
+      return [{ event, count }]
+    }
+    return []
+  })
+
+  const lastRaw = lastRes[0]?.[0]
+  const lastActivityTs = typeof lastRaw === 'number' ? lastRaw : null
+
+  return { weeklySessions, topEvents, lastActivityTs }
 }
