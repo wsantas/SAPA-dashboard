@@ -12,13 +12,13 @@ export const demoAnalytics: Analytics = {
     current_streak: 1,
     longest_streak: 1,
     this_week: 89,
-    due_reviews: 0,
+    due_reviews: 2,
   },
   confidence_distribution: {
     mastered: 18,
-    strong: 71,
-    learning: 0,
-    weak: 0,
+    strong: 62,
+    learning: 7,
+    weak: 2,
   },
   topics: [
     {
@@ -86,7 +86,24 @@ export const demoAnalytics: Analytics = {
       next_review: '2026-05-22T17:52:35.959968',
     },
   ],
-  due_reviews: [],
+  due_reviews: [
+    {
+      name: 'red light',
+      first_learned: '2026-04-13T17:43:20.095781',
+      last_reviewed: '2026-04-13T17:52:35.965871',
+      review_count: 1,
+      confidence_score: 0.28,
+      next_review: '2026-04-14T17:52:35.965908',
+    },
+    {
+      name: 'parasympathetic',
+      first_learned: '2026-04-13T17:43:20.095781',
+      last_reviewed: '2026-04-13T17:52:35.961059',
+      review_count: 1,
+      confidence_score: 0.22,
+      next_review: '2026-04-15T17:52:35.961096',
+    },
+  ],
   daily_activity: {
     // Sporadic early usage (late Jan / Feb)
     '2026-01-20': 2,
