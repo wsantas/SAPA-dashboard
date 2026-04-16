@@ -9,7 +9,13 @@ import {
   type Profile,
   type Topic,
 } from './types'
-import { demoAnalytics, demoInsights, demoProfiles } from './demo'
+import {
+  demoAnalytics,
+  demoAnalyticsJane,
+  demoInsights,
+  demoInsightsJane,
+  demoProfiles,
+} from './demo'
 
 const TopicsSchema = z.array(TopicSchema)
 const ProfilesSchema = z.array(ProfileSchema)
@@ -18,8 +24,15 @@ const API_BASE: string = import.meta.env['VITE_API_BASE'] ?? 'http://localhost:8
 
 export const DEMO_MODE: boolean = import.meta.env['VITE_DEMO_MODE'] === 'true'
 
+let _activeProfileId = 1
+
 export function setActiveProfileId(id: number): void {
+  _activeProfileId = id
   document.cookie = `profile_id=${id}; path=/; SameSite=Lax`
+}
+
+function isJane(): boolean {
+  return _activeProfileId === 2
 }
 
 function simulateNetwork<T>(value: T, ms = 400): Promise<T> {
@@ -77,16 +90,17 @@ export function fetchProfiles(): Promise<Profile[]> {
 }
 
 export function fetchAnalytics(): Promise<Analytics> {
-  if (DEMO_MODE) return simulateNetwork(demoAnalytics)
+  if (DEMO_MODE) return simulateNetwork(isJane() ? demoAnalyticsJane : demoAnalytics)
   return apiGet('/api/analytics', AnalyticsSchema)
 }
 
 export function fetchTopics(): Promise<Topic[]> {
-  if (DEMO_MODE) return simulateNetwork(demoAnalytics.topics as Topic[])
+  const data = isJane() ? demoAnalyticsJane : demoAnalytics
+  if (DEMO_MODE) return simulateNetwork(data.topics as Topic[])
   return apiGet('/api/topics', TopicsSchema)
 }
 
 export function fetchInsights(): Promise<InsightsResponse> {
-  if (DEMO_MODE) return simulateNetwork(demoInsights, 1200)
+  if (DEMO_MODE) return simulateNetwork(isJane() ? demoInsightsJane : demoInsights, 1200)
   return apiPost('/api/ai/insights', InsightsResponseSchema)
 }
