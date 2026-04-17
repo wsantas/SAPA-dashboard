@@ -92,6 +92,13 @@ export const ProfileSchema = z.object({
 
 export type Profile = z.infer<typeof ProfileSchema>
 
+export type DemoScenarioId =
+  | 'healthy'
+  | 'review_debt'
+  | 'onboarding'
+  | 'power_user'
+  | 'burnout_incoming'
+
 // PostHog HogQL query response shape (from our /api/posthog-query proxy).
 export const SignalsQueryResponseSchema = z.object({
   queryId: z.string(),

@@ -15,11 +15,12 @@ import {
 } from './types'
 import {
   DEFAULT_DEMO_PROFILE_ID,
-  demoDataByProfile,
   demoProfiles,
   demoSignals,
   type ProfileDemoData,
 } from './demo'
+import { getActiveScenarioId } from './scenarioStore'
+import { demoScenarios } from './scenarios'
 
 const TopicsSchema = z.array(TopicSchema)
 const ProfilesSchema = z.array(ProfileSchema)
@@ -31,18 +32,34 @@ const API_BASE: string =
 export const DEMO_MODE: boolean =
   import.meta.env['VITE_DEMO_MODE'] === 'true'
 
-let _activeProfileId = DEFAULT_DEMO_PROFILE_ID
-
+// Live-mode profile switching: SAPA's middleware reads the profile_id
+// cookie, so all we need to do is set it. In demo mode, profile
+// identity comes from the active scenario (see scenarios.ts) and this
+// function is never called.
 export function setActiveProfileId(id: number): void {
-  _activeProfileId = id
   document.cookie = `profile_id=${id}; path=/; SameSite=Lax`
 }
 
-function getDemoBundle(): ProfileDemoData {
-  return (
-    demoDataByProfile[_activeProfileId] ??
-    demoDataByProfile[DEFAULT_DEMO_PROFILE_ID]!
-  )
+// Kept for potential future use (e.g. an initial default in UI state)
+// — silence the unused-value lint by re-exporting.
+export { DEFAULT_DEMO_PROFILE_ID }
+
+/**
+ * In demo mode, all fetchers read from the currently-selected scenario
+ * rather than the profile map. This gives visitors on the deployed
+ * demo a set of hand-curated stories to explore (healthy, review-debt,
+ * onboarding, power-user, burnout) via the ScenarioPicker. The
+ * per-profile bundle (demoDataByProfile) is kept in demo.ts for the
+ * scenarios to reuse as raw material.
+ */
+function getActiveScenarioBundle(): ProfileDemoData {
+  const scenario = demoScenarios[getActiveScenarioId()]
+  return {
+    analytics: scenario.analytics,
+    topics: scenario.topics,
+    history: scenario.history,
+    insights: scenario.insights,
+  }
 }
 
 function simulateNetwork<T>(value: T, ms = 400): Promise<T> {
@@ -100,22 +117,22 @@ export function fetchProfiles(): Promise<Profile[]> {
 }
 
 export function fetchAnalytics(): Promise<Analytics> {
-  if (DEMO_MODE) return simulateNetwork(getDemoBundle().analytics)
+  if (DEMO_MODE) return simulateNetwork(getActiveScenarioBundle().analytics)
   return apiGet('/api/analytics', AnalyticsSchema)
 }
 
 export function fetchTopics(): Promise<Topic[]> {
-  if (DEMO_MODE) return simulateNetwork([...getDemoBundle().topics])
+  if (DEMO_MODE) return simulateNetwork([...getActiveScenarioBundle().topics])
   return apiGet('/api/topics', TopicsSchema)
 }
 
 export function fetchHistory(): Promise<HistoryEntry[]> {
-  if (DEMO_MODE) return simulateNetwork([...getDemoBundle().history])
+  if (DEMO_MODE) return simulateNetwork([...getActiveScenarioBundle().history])
   return apiGet('/api/history?limit=200', HistorySchema)
 }
 
 export function fetchInsights(): Promise<InsightsResponse> {
-  if (DEMO_MODE) return simulateNetwork(getDemoBundle().insights, 1200)
+  if (DEMO_MODE) return simulateNetwork(getActiveScenarioBundle().insights, 1200)
   return apiPost('/api/ai/insights', InsightsResponseSchema)
 }
 

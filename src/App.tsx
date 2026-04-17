@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { Analytics, AsyncState, Profile } from './types'
+import type { Analytics, AsyncState, DemoScenarioId, Profile } from './types'
 import { DEMO_MODE, fetchAnalytics, fetchProfiles, setActiveProfileId } from './api'
 import { trackEvent } from './analytics'
 import { useAsyncData } from './useAsyncData'
+import { useActiveScenario } from './useActiveScenario'
 import { useFeatureFlag } from './useFeatureFlag'
 import { useWebSocket } from './useWebSocket'
 import type { WsEvent } from './useWebSocket'
@@ -17,6 +18,7 @@ import { UsageAnalytics } from './components/UsageAnalytics'
 import { DashboardSignals } from './components/DashboardSignals'
 import { LiveToast } from './components/LiveToast'
 import { ProfileSwitcher } from './components/ProfileSwitcher'
+import { ScenarioPicker } from './components/ScenarioPicker'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import styles from './App.module.css'
 
@@ -25,8 +27,10 @@ function App() {
   const [activeProfile, setActiveProfile] = useState<number>(1)
   const { state, refetch } = useAsyncData(fetchAnalytics)
   const { lastEvent, connected } = useWebSocket()
+  const { scenario, scenarioId, setScenario } = useActiveScenario()
 
   useEffect(() => {
+    if (DEMO_MODE) return
     fetchProfiles().then(setProfiles).catch(() => {})
   }, [])
 
@@ -38,6 +42,14 @@ function App() {
       refetch()
     },
     [refetch],
+  )
+
+  const handleScenarioSwitch = useCallback(
+    (id: DemoScenarioId) => {
+      setScenario(id)
+      refetch()
+    },
+    [refetch, setScenario],
   )
 
   const handleRefresh = useCallback(() => {
@@ -58,6 +70,11 @@ function App() {
     prevEventRef.current = lastEvent
   }, [lastEvent, state.status, refetch])
 
+  // In demo mode, the profile identity comes from the active scenario;
+  // in live mode, the user picks via ProfileSwitcher.
+  const displayedProfile = DEMO_MODE ? scenario.profile.display_name : null
+  const remountKey = DEMO_MODE ? scenarioId : activeProfile
+
   return (
     <div className={styles.app}>
       <div className={styles.shell}>
@@ -73,15 +90,26 @@ function App() {
                 )}
               </span>
             </div>
-            <p className={styles.subtitle}>Spaced-repetition analytics</p>
+            <p className={styles.subtitle}>
+              {displayedProfile
+                ? `${displayedProfile} · spaced-repetition analytics`
+                : 'Spaced-repetition analytics'}
+            </p>
           </div>
           <div className={styles.headerActions}>
-            {profiles.length > 1 && (
-              <ProfileSwitcher
-                profiles={profiles}
-                activeId={activeProfile}
-                onSwitch={handleProfileSwitch}
+            {DEMO_MODE ? (
+              <ScenarioPicker
+                activeId={scenarioId}
+                onSwitch={handleScenarioSwitch}
               />
+            ) : (
+              profiles.length > 1 && (
+                <ProfileSwitcher
+                  profiles={profiles}
+                  activeId={activeProfile}
+                  onSwitch={handleProfileSwitch}
+                />
+              )
             )}
             <button type="button" className={styles.button} onClick={handleRefresh}>
               Refresh
@@ -89,7 +117,7 @@ function App() {
           </div>
         </header>
         <main>
-          <Body state={state} profileKey={activeProfile} />
+          <Body state={state} remountKey={remountKey} />
         </main>
       </div>
       <LiveToast event={lastEvent} />
@@ -99,15 +127,14 @@ function App() {
 
 function Body({
   state,
-  profileKey,
+  remountKey,
 }: {
   state: AsyncState<Analytics>
-  profileKey: number
+  remountKey: string | number
 }) {
   // Default is "on" — the flag exists so it can be flipped off from
   // PostHog's dashboard during a demo without redeploying.
   const showAiInsights = useFeatureFlag('show_ai_insights', true)
-
 
   switch (state.status) {
     case 'idle':
@@ -140,7 +167,7 @@ function Body({
         daily_activity,
       } = state.data
       return (
-        <div className={styles.grid} key={profileKey}>
+        <div className={styles.grid} key={remountKey}>
           <ErrorBoundary label="Streak">
             <StreakCard overview={overview} />
           </ErrorBoundary>
