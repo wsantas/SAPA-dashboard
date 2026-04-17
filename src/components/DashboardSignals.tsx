@@ -23,8 +23,10 @@ function formatRelative(fromTs: number, nowMs: number): string {
   return `${Math.floor(diffSec / 86400)}d ago`
 }
 
+const POLL_INTERVAL_MS = 20_000
+
 export function DashboardSignals() {
-  const { state, refetch } = useAsyncData(fetchDashboardSignals)
+  const { state, refetch, silentRefetch } = useAsyncData(fetchDashboardSignals)
   const [now, setNow] = useState(() => Date.now())
 
   // Tick every 5s so "last activity: Ns ago" stays live without
@@ -33,6 +35,14 @@ export function DashboardSignals() {
     const id = setInterval(() => setNow(Date.now()), 5000)
     return () => clearInterval(id)
   }, [])
+
+  // Poll PostHog every 20s silently — stale-while-revalidate so the
+  // widget feels live without flashing "loading" every cycle. Explicit
+  // Refresh button still uses refetch() which shows the loading state.
+  useEffect(() => {
+    const id = setInterval(silentRefetch, POLL_INTERVAL_MS)
+    return () => clearInterval(id)
+  }, [silentRefetch])
 
   function handleRefresh() {
     trackEvent('signals_refreshed')
