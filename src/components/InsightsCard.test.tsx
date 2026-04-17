@@ -6,6 +6,7 @@ import type { InsightsResponse } from '../types'
 const fetchInsightsMock = vi.fn<() => Promise<InsightsResponse>>()
 
 vi.mock('../api', () => ({
+  DEMO_MODE: false,
   fetchInsights: (...args: unknown[]) => fetchInsightsMock(...(args as [])),
 }))
 
