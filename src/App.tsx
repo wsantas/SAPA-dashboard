@@ -16,6 +16,7 @@ import { TopicsExplorer } from './components/TopicsExplorer'
 import { InsightsCard } from './components/InsightsCard'
 import { UsageAnalytics } from './components/UsageAnalytics'
 import { DashboardSignals } from './components/DashboardSignals'
+import { AutomationsWidget } from './components/AutomationsWidget'
 import { LiveToast } from './components/LiveToast'
 import { ProfileSwitcher } from './components/ProfileSwitcher'
 import { ScenarioPicker } from './components/ScenarioPicker'
@@ -182,6 +183,9 @@ function Body({
           </ErrorBoundary>
           <ErrorBoundary label="Activity Heatmap">
             <ActivityHeatmap dailyActivity={daily_activity} />
+          </ErrorBoundary>
+          <ErrorBoundary label="Automations">
+            <AutomationsWidget analytics={state.data} />
           </ErrorBoundary>
           <ErrorBoundary label="Topics">
             <TopicsExplorer />
