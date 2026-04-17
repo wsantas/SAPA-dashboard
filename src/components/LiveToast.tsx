@@ -79,25 +79,30 @@ export function LiveToast({ event }: Props) {
     dispatch({ type: 'new-event', event })
   }, [event])
 
-  // Manage timers based on phase transitions
+  // Schedule the exit transition DISPLAY_MS after becoming visible.
+  // Scoped to visible→exiting only so the cleanup doesn't interfere
+  // with the subsequent hide timer.
   useEffect(() => {
     if (state.phase !== 'visible') return
-
-    clearTimeout(timerRef.current)
-    clearTimeout(exitTimerRef.current)
-
     timerRef.current = setTimeout(() => {
       dispatch({ type: 'exit' })
-      exitTimerRef.current = setTimeout(() => {
-        dispatch({ type: 'hide' })
-      }, EXIT_MS)
     }, DISPLAY_MS)
-
     return () => {
       clearTimeout(timerRef.current)
-      clearTimeout(exitTimerRef.current)
     }
   }, [state.phase, state.trigger])
+
+  // Schedule the full hide EXIT_MS after the exit animation begins.
+  // Separate effect so the visible-phase cleanup doesn't clear it.
+  useEffect(() => {
+    if (state.phase !== 'exiting') return
+    exitTimerRef.current = setTimeout(() => {
+      dispatch({ type: 'hide' })
+    }, EXIT_MS)
+    return () => {
+      clearTimeout(exitTimerRef.current)
+    }
+  }, [state.phase])
 
   if (state.phase === 'hidden' || !state.displayed) return null
 
