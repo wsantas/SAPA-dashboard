@@ -105,4 +105,8 @@ export type DashboardSignals = {
   readonly weeklySessions: number
   readonly topEvents: ReadonlyArray<{ event: string; count: number }>
   readonly lastActivityTs: number | null
+  /** 'live' when the data came from a successful HogQL query through
+   * the Vercel proxy; 'demo' when we fell back to baked fixtures
+   * (function not deployed, env vars missing, or network failure). */
+  readonly source: 'live' | 'demo'
 }

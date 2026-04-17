@@ -183,7 +183,7 @@ export async function fetchDashboardSignals(): Promise<DashboardSignals> {
     const lastRaw = lastRes[0]?.[0]
     const lastActivityTs = typeof lastRaw === 'number' ? lastRaw : null
 
-    return { weeklySessions, topEvents, lastActivityTs }
+    return { weeklySessions, topEvents, lastActivityTs, source: 'live' }
   } catch (err) {
     console.warn('[signals] PostHog query failed; using baked signals:', err)
     return demoSignals

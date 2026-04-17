@@ -610,4 +610,5 @@ export const demoSignals: DashboardSignals = {
     { event: 'refresh_clicked', count: 6 },
   ],
   lastActivityTs: Math.floor(Date.now() / 1000) - 87,
+  source: 'demo',
 }

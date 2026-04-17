@@ -46,11 +46,24 @@ export function DashboardSignals() {
     >
       <div className={signalStyles.header}>
         <div>
-          <h2 id="signals-heading" className={styles.heading}>
-            Dashboard Signals
-          </h2>
+          <div className={signalStyles.titleRow}>
+            <h2 id="signals-heading" className={styles.heading}>
+              Dashboard Signals
+            </h2>
+            {state.status === 'success' &&
+              (state.data.source === 'live' ? (
+                <span className={signalStyles.livePill}>
+                  <span className={signalStyles.liveDot} />
+                  LIVE
+                </span>
+              ) : (
+                <span className={signalStyles.demoPill}>DEMO</span>
+              ))}
+          </div>
           <p className={signalStyles.subtitle}>
-            Live analytics of this dashboard, via PostHog HogQL
+            {state.status === 'success' && state.data.source === 'demo'
+              ? 'Baked demo fallback — PostHog proxy not reachable or unconfigured'
+              : 'Live analytics of this dashboard, via PostHog HogQL'}
           </p>
         </div>
         <button
@@ -139,8 +152,9 @@ function SignalsBody({
           )}
 
           <p className={signalStyles.footnote}>
-            Powered by HogQL · queried via a server-side proxy so the personal
-            API key never ships to the browser.
+            {state.data.source === 'live'
+              ? 'Live HogQL · queried through a server-side proxy so the personal API key never ships to the browser'
+              : 'Demo fallback · set POSTHOG_PERSONAL_API_KEY + POSTHOG_PROJECT_ID in Vercel env vars to flip this widget to real HogQL data'}
           </p>
         </>
       )
