@@ -155,28 +155,37 @@ async function runHogQLQuery(
 }
 
 export async function fetchDashboardSignals(): Promise<DashboardSignals> {
-  if (DEMO_MODE) return simulateNetwork(demoSignals, 600)
+  // DashboardSignals talks to PostHog via the Vercel proxy function,
+  // NOT to SAPA — so it isn't gated by VITE_DEMO_MODE. We always
+  // attempt the real query and gracefully fall back to baked signals
+  // on any failure (function not deployed, env vars missing, network,
+  // PostHog down). That way the widget renders useful content in
+  // every deployment scenario without a second env-var toggle.
+  try {
+    const [weeklyRes, topRes, lastRes] = await Promise.all([
+      runHogQLQuery('weekly_sessions'),
+      runHogQLQuery('top_events'),
+      runHogQLQuery('last_activity'),
+    ])
 
-  const [weeklyRes, topRes, lastRes] = await Promise.all([
-    runHogQLQuery('weekly_sessions'),
-    runHogQLQuery('top_events'),
-    runHogQLQuery('last_activity'),
-  ])
+    const weeklySessions =
+      typeof weeklyRes[0]?.[0] === 'number' ? weeklyRes[0][0] : 0
 
-  const weeklySessions =
-    typeof weeklyRes[0]?.[0] === 'number' ? weeklyRes[0][0] : 0
+    const topEvents = topRes.flatMap((row) => {
+      const event = row[0]
+      const count = row[1]
+      if (typeof event === 'string' && typeof count === 'number') {
+        return [{ event, count }]
+      }
+      return []
+    })
 
-  const topEvents = topRes.flatMap((row) => {
-    const event = row[0]
-    const count = row[1]
-    if (typeof event === 'string' && typeof count === 'number') {
-      return [{ event, count }]
-    }
-    return []
-  })
+    const lastRaw = lastRes[0]?.[0]
+    const lastActivityTs = typeof lastRaw === 'number' ? lastRaw : null
 
-  const lastRaw = lastRes[0]?.[0]
-  const lastActivityTs = typeof lastRaw === 'number' ? lastRaw : null
-
-  return { weeklySessions, topEvents, lastActivityTs }
+    return { weeklySessions, topEvents, lastActivityTs }
+  } catch (err) {
+    console.warn('[signals] PostHog query failed; using baked signals:', err)
+    return demoSignals
+  }
 }
